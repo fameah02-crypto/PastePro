@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PastePro — Professional Pastebin Clone</title>
+
+<!-- Highlight.js for syntax highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --accent: #238636;
+  --card: #161b22;
+  --border: #30363d;
+  --font: "Segoe UI", sans-serif;
+}
+body.light {
+  --bg: #f8f9fa;
+  --fg: #1c1c1c;
+  --accent: #0078ff;
+  --card: #ffffff;
+  --border: #d0d7de;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  flex-shrink: 0;
+}
+header h1 {
+  font-size: 1.4rem;
+  margin: 0;
+  color: var(--accent);
+}
+header button {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.sidebar {
+  width: 260px;
+  border-right: 1px solid var(--border);
+  background: var(--card);
+  overflow-y: auto;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+.sidebar input {
+  width: 100%;
+  padding: 0.4rem;
+  margin-bottom: 0.8rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 4px;
+}
+.paste-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.paste-list li {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  border-radius: 4px;
+}
+.paste-list li:hover {
+  background: var(--accent);
+  color: white;
+}
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow: hidden;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.toolbar input {
+  flex: 1 1 200px;
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 4px;
+  min-width: 0;
+}
+.toolbar button {
+  background: var(--accent);
+  border: none;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: monospace;
+  padding: 1rem;
+  outline: none;
+  font-size: 0.95rem;
+}
+#output {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--border);
+  padding: 1rem;
+  border-radius: 4px;
+  background: var(--card);
+  font-size: 0.95rem;
+}
+footer {
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  color: #888;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.hidden {
+  display: none;
+}
+
+/* ✅ Responsive Adjustments */
+@media (max-width: 900px) {
+  .container {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    max-height: 40vh;
+  }
+  main {
+    padding: 0.8rem;
+  }
+  textarea,
+  #output {
+    font-size: 1rem;
+  }
+  header h1 {
+    font-size: 1.2rem;
+  }
+  header button {
+    padding: 0.4rem 0.6rem;
+  }
+}
+
+/* Even smaller screens */
+@media (max-width: 600px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .toolbar input {
+    width: 100%;
+  }
+  .sidebar {
+    max-height: 35vh;
+  }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>PastePro</h1>
+  <div>
+    <button id="newPaste">New</button>
+    <button id="toggleTheme">🌙</button>
+  </div>
+</header>
+
+<div class="container">
+  <aside class="sidebar">
+    <h2>Your Pastes</h2>
+    <input type="text" id="search" placeholder="Search...">
+    <ul class="paste-list" id="pasteList"></ul>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <input id="title" placeholder="Paste title..." />
+      <button id="save">💾 Save</button>
+      <button id="viewRaw">📄 Raw</button>
+      <button id="copyLink">🔗 Copy Link</button>
+    </div>
+
+    <textarea id="editor" placeholder="Write your paste here..."></textarea>
+    <pre id="output" class="hidden"><code></code></pre>
+  </main>
+</div>
+
+<footer>© 2025 PastePro — Local Pastebin Clone</footer>
+
+<script>
+const editor = document.getElementById('editor');
+const output = document.getElementById('output');
+const pasteList = document.getElementById('pasteList');
+const titleInput = document.getElementById('title');
+const searchInput = document.getElementById('search');
+
+let currentId = null;
+let darkMode = true;
+
+// Load pastes from localStorage
+function getPastes() {
+  return JSON.parse(localStorage.getItem('pastes') || '{}');
+}
+function savePastes(pastes) {
+  localStorage.setItem('pastes', JSON.stringify(pastes));
+}
+function refreshList() {
+  const pastes = getPastes();
+  pasteList.innerHTML = '';
+  const q = searchInput.value.toLowerCase();
+  Object.keys(pastes)
+    .filter(id => pastes[id].title.toLowerCase().includes(q))
+    .forEach(id => {
+      const li = document.createElement('li');
+      li.textContent = pastes[id].title || '(Untitled)';
+      li.onclick = () => loadPaste(id);
+      pasteList.appendChild(li);
+    });
+}
+function loadPaste(id) {
+  const paste = getPastes()[id];
+  if (!paste) return;
+  currentId = id;
+  titleInput.value = paste.title;
+  editor.value = paste.content;
+  showEditor();
+}
+function showEditor() {
+  editor.classList.remove('hidden');
+  output.classList.add('hidden');
+}
+function showOutput() {
+  output.classList.remove('hidden');
+  editor.classList.add('hidden');
+  output.querySelector('code').textContent = editor.value;
+  hljs.highlightElement(output.querySelector('code'));
+}
+
+// Save button
+document.getElementById('save').onclick = () => {
+  const title = titleInput.value.trim() || 'Untitled';
+  const content = editor.value;
+  const pastes = getPastes();
+  if (!currentId) currentId = 'paste-' + Date.now();
+  pastes[currentId] = { title, content, date: new Date().toISOString() };
+  savePastes(pastes);
+  refreshList();
+  alert('Paste saved!');
+};
+
+// New paste
+document.getElementById('newPaste').onclick = () => {
+  currentId = null;
+  titleInput.value = '';
+  editor.value = '';
+  showEditor();
+};
+
+// View raw mode
+document.getElementById('viewRaw').onclick = showOutput;
+
+// Copy link
+document.getElementById('copyLink').onclick = () => {
+  const link = location.href.split('#')[0] + '#' + currentId;
+  navigator.clipboard.writeText(link);
+  alert('Link copied!');
+};
+
+// Theme toggle
+document.getElementById('toggleTheme').onclick = () => {
+  darkMode = !darkMode;
+  document.body.classList.toggle('light', !darkMode);
+  document.getElementById('toggleTheme').textContent = darkMode ? '🌙' : '☀️';
+};
+
+// Search filter
+searchInput.oninput = refreshList;
+
+// Auto load by hash
+if (location.hash) {
+  const id = location.hash.slice(1);
+  loadPaste(id);
+}
+
+// Autosave drafts
+setInterval(() => {
+  localStorage.setItem('draft', editor.value);
+}, 3000);
+
+if (localStorage.getItem('draft') && !location.hash) {
+  editor.value = localStorage.getItem('draft');
+}
+
+refreshList();
+</script>
+</body>
+</html>
